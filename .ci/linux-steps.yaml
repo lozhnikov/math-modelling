@@ -27,8 +27,8 @@ steps:
 - script: |
     echo $(TestsEnvArgs) > ./env
     source ./env
-    ./build/math_modeling_server &
-    sleep 3 && ./build/math_modeling_test
+    ./build/math_modelling_server &
+    sleep 3 && ./build/math_modelling_test
   displayName: 'Run tests'
 
 

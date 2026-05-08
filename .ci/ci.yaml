@@ -118,8 +118,8 @@ jobs:
     displayName: 'Build'
 
   - script: |
-      ./build/math_modeling_server &
-      sleep 3 && ./build/math_modeling_test
+      ./build/math_modelling_server &
+      sleep 3 && ./build/math_modelling_test
     displayName: 'Run tests'
 
 - job: WindowsMSVS2022
@@ -147,7 +147,7 @@ jobs:
     displayName: 'Build'
 
   - bash: |
-      build/Release/numerical_methods_server.exe &
-      sleep 3 && build/Release/numerical_methods_test.exe
+      build/Release/math_modelling_server.exe &
+      sleep 3 && build/Release/math_modelling_test.exe
     displayName: 'Run tests'
 
