@@ -82,23 +82,23 @@ jobs:
       GCC:
         CMakeArgs: '-D CMAKE_CXX_COMPILER=g++-13 -D CMAKE_BUILD_TYPE=Release'
         TestsEnvArgs: ''
-        ExtraPackages: ''
+        ExtraPackages: 'python3-matplotlib python3-numpy ffmpeg'
       libstdc++DebugDefines:
         CMakeArgs: '-D CMAKE_CXX_COMPILER=g++-13 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -D _GLIBCXX_DEBUG -D _GLIBCXX_DEBUG_PEDANTIC"'
         TestsEnvArgs: ''
-        ExtraPackages: ''
+        ExtraPackages: 'python3-matplotlib python3-numpy ffmpeg'
       libc++DebugDefines:
         CMakeArgs: '-D CMAKE_CXX_COMPILER=clang++-18 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -D _LIBCPP_DEBUG=1 -stdlib=libc++"'
         TestsEnvArgs: ''
-        ExtraPackages: 'clang-18 libc++-18-dev libc++abi-18-dev'
+        ExtraPackages: 'clang-18 libc++-18-dev libc++abi-18-dev python3-matplotlib python3-numpy ffmpeg'
       AddressSanitizer:
         CMakeArgs: '-D CMAKE_CXX_COMPILER=clang++-18 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls"'
         TestsEnvArgs: 'ASAN_OPTIONS=detect_stack_use_after_return=1'
-        ExtraPackages: 'clang-18'
+        ExtraPackages: 'clang-18 python3-matplotlib python3-numpy ffmpeg'
       UndefinedBehaviourSanitizer:
         CMakeArgs: '-D CMAKE_CXX_COMPILER=clang++-18 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls" -D CMAKE_EXE_LINKER_FLAGS="-lubsan"'
         TestsEnvArgs: 'UBSAN_OPTIONS=print_stacktrace=1'
-        ExtraPackages: 'clang-18'
+        ExtraPackages: 'clang-18 python3-matplotlib python3-numpy ffmpeg'
   steps:
   - template: linux-steps.yaml
 
