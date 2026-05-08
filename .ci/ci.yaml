@@ -1,0 +1,153 @@
+trigger:
+  branches:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+    - '*'
+
+jobs:
+- job: StyleChecks
+  timeoutInMinutes: 3
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  - script: |
+      # pip is already installed.
+      #sudo apt-get update
+
+      #sudo apt-get install -y python3-pip
+
+      sudo pip3 install cpplint pycodestyle
+    displayName: 'Install build dependencies'
+
+  - script: |
+      cpplint --recursive --filter="-legal/copyright,-build/c++11,-build/c++14,-build/c++17,-build/include_subdir,-whitespace/indent_namespace" methods/ tests/ include/ src/
+      pycodestyle python/
+    displayName: 'Run linter'
+
+- job: BuildDocumentation
+  timeoutInMinutes: 3
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - script: |
+      sudo apt-get update
+
+      sudo apt-get install -y doxygen graphviz
+    displayName: 'Install build dependencies'
+
+  - script: |
+      mkdir build
+
+      doxygen
+    displayName: 'Run doxygen'
+
+
+- job: ClangStaticAnalysis
+  timeoutInMinutes: 3
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - script: |
+      sudo apt-get update
+
+      sudo apt-get install -y clang-tools-18
+    displayName: 'Install build dependencies'
+
+  - script: |
+      mkdir build && cd build
+
+      scan-build-18 --use-c++=g++-13 cmake -G "Unix Makefiles" -D CMAKE_EXPORT_COMPILE_COMMANDS=ON ../
+    displayName: 'Run CMake'
+
+  - script: cd build && scan-build-18 --use-c++=g++-13 --status-bugs make -j2
+    displayName: 'Run static analysis with clang'
+
+- job: Linux
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      GCC:
+        CMakeArgs: '-D CMAKE_CXX_COMPILER=g++-13 -D CMAKE_BUILD_TYPE=Release'
+        TestsEnvArgs: ''
+        ExtraPackages: ''
+      libstdc++DebugDefines:
+        CMakeArgs: '-D CMAKE_CXX_COMPILER=g++-13 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -D _GLIBCXX_DEBUG -D _GLIBCXX_DEBUG_PEDANTIC"'
+        TestsEnvArgs: ''
+        ExtraPackages: ''
+      libc++DebugDefines:
+        CMakeArgs: '-D CMAKE_CXX_COMPILER=clang++-18 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -D _LIBCPP_DEBUG=1 -stdlib=libc++"'
+        TestsEnvArgs: ''
+        ExtraPackages: 'clang-18 libc++-18-dev libc++abi-18-dev'
+      AddressSanitizer:
+        CMakeArgs: '-D CMAKE_CXX_COMPILER=clang++-18 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls"'
+        TestsEnvArgs: 'ASAN_OPTIONS=detect_stack_use_after_return=1'
+        ExtraPackages: 'clang-18'
+      UndefinedBehaviourSanitizer:
+        CMakeArgs: '-D CMAKE_CXX_COMPILER=clang++-18 -D CMAKE_BUILD_TYPE=Debug -D CMAKE_CXX_FLAGS="-O1 -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls" -D CMAKE_EXE_LINKER_FLAGS="-lubsan"'
+        TestsEnvArgs: 'UBSAN_OPTIONS=print_stacktrace=1'
+        ExtraPackages: 'clang-18'
+  steps:
+  - template: linux-steps.yaml
+
+- job: macOS
+  timeoutInMinutes: 10
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
+  - script: |
+      mkdir build && cd build
+
+      cmake -D CMAKE_POLICY_VERSION_MINIMUM=3.2 -D CMAKE_BUILD_TYPE=Release ../
+    displayName: 'Run CMake'
+
+  - script: |
+      cd build && make -j2
+    displayName: 'Build'
+
+  - script: |
+      ./build/math_modeling_server &
+      sleep 3 && ./build/math_modeling_test
+    displayName: 'Run tests'
+
+- job: WindowsMSVS2022
+  timeoutInMinutes: 10
+  displayName: Windows MSVS 2022
+  pool:
+    vmImage: windows-2025
+  steps:
+  - powershell: |
+      mkdir build
+      cd build
+      cmake -G "Visual Studio 17 2022" -D CMAKE_BUILD_TYPE=Release ../
+    displayName: 'Run CMake'
+
+  - task: MSBuild@1
+    inputs:
+      solution: 'build/*.sln'
+      msbuildLocationMethod: 'location'
+      msbuildVersion: '17.0'
+      configuration: 'Release'
+      msbuildArchitecture: 'x64'
+      msbuildArguments: /m /p:BuildInParallel=true
+      maximumCpuCount: false
+      clean: false
+    displayName: 'Build'
+
+  - bash: |
+      build/Release/numercial_methods_server.exe &
+      sleep 3 && build/Release/numerical_methods_test.exe
+    displayName: 'Run tests'
+

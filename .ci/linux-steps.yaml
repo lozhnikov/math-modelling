@@ -1,0 +1,34 @@
+steps:
+- checkout: self
+  clean: true
+  fetchDepth: 1
+
+- script: |
+    # Nothing to do. I appears the ubuntu image already has these packages.
+    #sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    #sudo apt-get update
+    #sudo apt-get install -y g++-9 clang-9 libasan5 libubsan1
+
+    if ! [ -z "$(ExtraPackages)" ]
+    then
+      sudo apt-get update
+      sudo apt-get install -y $(ExtraPackages)
+    fi
+  displayName: 'Install build dependencies'
+
+- script: |
+    mkdir build && cd build
+    cmake $(CMakeArgs) ../
+  displayName: 'Run CMake'
+
+- script: cd build && make -j2
+  displayName: 'Build'
+
+- script: |
+    echo $(TestsEnvArgs) > ./env
+    source ./env
+    ./build/math_modeling_server &
+    sleep 3 && ./build/math_modeling_test
+  displayName: 'Run tests'
+
+
