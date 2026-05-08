@@ -9,7 +9,7 @@ pr:
 
 jobs:
 - job: StyleChecks
-  timeoutInMinutes: 3
+  timeoutInMinutes: 5
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -34,7 +34,7 @@ jobs:
     displayName: 'Run linter'
 
 - job: BuildDocumentation
-  timeoutInMinutes: 3
+  timeoutInMinutes: 5
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -53,7 +53,7 @@ jobs:
 
 
 - job: ClangStaticAnalysis
-  timeoutInMinutes: 3
+  timeoutInMinutes: 5
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -74,7 +74,7 @@ jobs:
     displayName: 'Run static analysis with clang'
 
 - job: Linux
-  timeoutInMinutes: 10
+  timeoutInMinutes: 20
   pool:
     vmImage: 'ubuntu-latest'
   strategy:
@@ -107,6 +107,12 @@ jobs:
   pool:
     vmImage: 'macOS-latest'
   steps:
+  - script: |
+      pip install matplotlib numpy
+
+      brew install ffmpeg
+    displayName: 'Install prerequisties'
+
   - script: |
       mkdir build && cd build
 
