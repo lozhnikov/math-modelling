@@ -138,7 +138,7 @@ jobs:
       pip install matplotlib numpy
 
       winget install --accept-package-agreements --accept-source-agreements ffmpeg
-      env:path
+      $env:path
     displayName: 'Install prerequisties'
 
   - powershell: |
