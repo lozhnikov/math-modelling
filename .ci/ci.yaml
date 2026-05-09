@@ -135,9 +135,9 @@ jobs:
     vmImage: windows-2025
   steps:
   - powershell: |
-    pip install matplotlib numpy
+      pip install matplotlib numpy
 
-    winget install ffmpeg
+      winget install ffmpeg
     displayName: 'Install prerequisties'
 
   - powershell: |
