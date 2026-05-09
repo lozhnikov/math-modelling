@@ -139,7 +139,7 @@ jobs:
 
       winget install --accept-package-agreements --accept-source-agreements ffmpeg
       $env:path
-      Get-ChildItem -Path "C:\" -Filter "ffmpeg" -Recurse
+      Get-AppxPackage ffmpeg | Select-Object InstallLocation
     displayName: 'Install prerequisties'
 
   - powershell: |
