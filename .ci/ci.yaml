@@ -135,6 +135,12 @@ jobs:
     vmImage: windows-2025
   steps:
   - powershell: |
+    pip install matplotlib numpy
+
+    winget install ffmpeg
+    displayName: 'Install prerequisties'
+
+  - powershell: |
       mkdir build
       cd build
       cmake -G "Visual Studio 17 2022" -D CMAKE_BUILD_TYPE=Release ../
