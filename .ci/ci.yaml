@@ -137,7 +137,7 @@ jobs:
   - powershell: |
       pip install matplotlib numpy
 
-      winget install ffmpeg
+      winget install --accept-package-agreements --accept-source-agreements ffmpeg
     displayName: 'Install prerequisties'
 
   - powershell: |
