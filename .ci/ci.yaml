@@ -139,7 +139,6 @@ jobs:
 
       winget install --accept-package-agreements --accept-source-agreements ffmpeg
       $env:path
-      ffmpeg -h
       Get-ChildItem -Path "C:\" -Filter "ffmpeg" -Recurse
     displayName: 'Install prerequisties'
 
