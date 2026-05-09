@@ -138,9 +138,11 @@ jobs:
       pip install matplotlib numpy
 
       winget install --accept-package-agreements --accept-source-agreements ffmpeg
+      env:path
     displayName: 'Install prerequisties'
 
   - powershell: |
+      env:path
       mkdir build
       cd build
       cmake -G "Visual Studio 17 2022" -D CMAKE_BUILD_TYPE=Release ../
@@ -159,6 +161,7 @@ jobs:
     displayName: 'Build'
 
   - bash: |
+      echo $PATH
       build/Release/math_modelling_server.exe &
       sleep 3 && build/Release/math_modelling_test.exe
     displayName: 'Run tests'
