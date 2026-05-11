@@ -11,8 +11,7 @@
 #include <httplib.h>
 
 /* Сюда нужно добавить объявления тестовых функций. */
-
-
+void TestHeatEquation();
 /* Конец вставки. */
 
 #endif  // TESTS_TEST_HPP_
