@@ -290,13 +290,13 @@ static void PlotDoubleTest(httplib::Client* cli) {
     char command[1024];
 
     snprintf(command, sizeof(buffer),
-        "python \"%s\" HeatConductionReferenceExamplePlotter \"%s\" \"%s\"",
+        "python3 \"%s\" HeatConductionReferenceExamplePlotter \"%s\" \"%s\"",
         plotterPath.c_str(), jsonDataPath.c_str(), videoOutputPath.c_str());
 
     int code = system(command);
 
     REQUIRE_EQUAL(code, 0);
 
-    std::filesystem::remove_all(outputPath);
+//    std::filesystem::remove_all(outputPath);
   }
 }
