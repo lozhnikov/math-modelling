@@ -1,0 +1,31 @@
+/*!
+
+@file heat_conduction_reference_example.dox
+@author Mikhail Lozhnikov
+
+@page heat_conduction_reference_example Эталонный пример реализации расчета
+уравнения теплопроводности
+
+@section heat_conduction_reference_example_algo Описание алгоритма
+
+
+Алгоритм реализован в классе mm::HeatConductionReferenceExampleSolver.
+Один шаг алгоритма реализован в функции
+mm::HeatConductionReferenceExampleSolver::MakeStep().
+
+*/
+
+
+/*!
+@fn mm::HeatConductionReferenceExampleSolver::MakeStep()
+
+Функция реализует один шаг алгоритма решения уравнения теплопроводности,
+описанного в разделе
+@ref heat_conduction_reference_example.
+
+Функция вычисляет решение уравнения теплопроводности
+\f[
+\frac{\partial u}{\partial t} = \Delta u
+\f]
+на следующем шаге по времени по явной разностной схеме.
+*/
