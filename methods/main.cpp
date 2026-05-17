@@ -15,6 +15,10 @@
 
 using json = nlohmann::json;
 
+mm::TasksQueue tasksQueue;
+//Делаю глобальной переменной, чтоб HeatEquationMethod
+//имел доступ к очереди задач
+
 int main(int argc, char* argv[]) {
   // Порт по-умолчанию.
   int port = 8080;
@@ -30,7 +34,7 @@ int main(int argc, char* argv[]) {
 
   httplib::Server svr;
 
-  mm::TasksQueue tasksQueue;
+  //mm::TasksQueue tasksQueue;
 
   // Обработчик для GET запроса по адресу /stop. Этот обработчик
   // останавливает сервер.
@@ -108,7 +112,17 @@ int main(int argc, char* argv[]) {
 
 
   /* Сюда нужно вставить обработчик post запроса для алгоритма. */
-
+  svr.Post("/HeatEquation", [&](const httplib::Request& req,
+  httplib::Response& res) {
+    nlohmann::json input = nlohmann::json::parse(req.body);
+    nlohmann::json output;
+    int taskId = mm::HeatEquationMethod(input, &output);
+    output["id"] = taskId;
+    res.set_content(output.dump(), "application/json");
+  });
+  //Вызывает метод POST у нашего сервера svr
+  //"/HeatEquation" -- путь, по которому принимает POST-запрос
+  //лямбда-функция для запуска задачи и получения результата по id
 
 
 
