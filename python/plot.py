@@ -1,4 +1,5 @@
 import sys
+from plotters.heat_equation_plotter import HeatEquationPlotter
 
 if __name__ == '__main__':
 
@@ -7,6 +8,7 @@ if __name__ == '__main__':
         raise SystemError
 
     plotters = {
+      'heat_equation': HeatEquationPlotter,
     }
 
     if not (sys.argv[1] in plotters):
