@@ -6,6 +6,6 @@
 @page algorithms Алгоритмы
 
 Список реализованных алгоритмов:
-
+- \subpage heat_conduction
 
 */

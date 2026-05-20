@@ -1,0 +1,31 @@
+/*!
+
+@file heat_conduction.dox
+@author Savva Galkin
+
+@page heat_conduction Реализация расчета
+уравнения теплопроводности
+
+@section heat_conduction_algo Описание алгоритма
+
+
+Алгоритм реализован в классе mm::HeatConductionSolver.
+Один шаг алгоритма реализован в функции
+mm::HeatConductionSolver::MakeStep().
+
+*/
+
+
+/*!
+@fn mm::HeatConductionSolver::MakeStep()
+
+Функция реализует один шаг алгоритма решения уравнения теплопроводности,
+описанного в разделе
+@ref heat_conduction.
+
+Функция вычисляет решение уравнения теплопроводности
+\f[
+\frac{\partial u}{\partial t} = \Delta u
+\f]
+на следующем шаге по времени по неявной разностной схеме.
+*/
