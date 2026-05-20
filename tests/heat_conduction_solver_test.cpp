@@ -430,7 +430,7 @@ static void PlotDoubleTest(httplib::Client* cli) {
         plotterPath.c_str(), jsonDataPath.c_str(), videoOutputPath.c_str());
 
     int code = system(command);
-    
+
     if (code != 0) {
       snprintf(command, sizeof(buffer),
           "python3 \"%s\" HeatConductionPlotter \"%s\" \"%s\"",
@@ -583,7 +583,7 @@ static void PlotRandomTest(httplib::Client* cli) {
         plotterPath.c_str(), jsonDataPath.c_str(), videoOutputPath.c_str());
 
     int code = system(command);
-    
+
     if (code != 0) {
       snprintf(command, sizeof(buffer),
           "python3 \"%s\" HeatConductionPlotter \"%s\" \"%s\"",
