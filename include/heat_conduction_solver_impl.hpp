@@ -121,7 +121,7 @@ bool HeatConductionSolver<T>::MakeStep() {
     int pivot_row, int start_row, int end_row) {
     for (int i = start_row; i < end_row; ++i) {
         if (i != pivot_row) {
-            double factor = A[indMatrix(i, pivot_row)]
+            double factor = A[indMatrix(i, pivot_row)];
             factor /= A[indMatrix(pivot_row, pivot_row)];
             for (int j = pivot_row; j < n; ++j) {
                 A[indMatrix(i, j)] -= factor * A[indMatrix(pivot_row, j)];
