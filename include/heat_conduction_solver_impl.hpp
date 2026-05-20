@@ -9,6 +9,7 @@
 #define INCLUDE_HEAT_CONDUCTION_SOLVER_IMPL_HPP_
 
 #include <heat_conduction_solver.hpp>
+#include <vector>
 
 namespace mm {
 
@@ -51,10 +52,11 @@ bool HeatConductionSolver<T>::MakeStep() {
     return p * (M - 1)*M + q;
   };
 
+  int s = M*(M-1);
   // Создаём матрицу A и вектор y для последующего решения уравнения Ax = y,
   // всё инициализируем нулями для удобства
-  int* A = new int[M*M*(M-1)*(M-1)]{};
-  int* y = new int[M*(M-1)]{};
+  int* A = new int[s*s]{};
+  int* y = new int[s]{};
 
   for (int j = 0; j <= M; j++) {
     // Нижняя граница вместе с нижними углами
@@ -80,38 +82,34 @@ bool HeatConductionSolver<T>::MakeStep() {
       // Внутренние точки области
       if (j == M-1) {
         // Условие du/dx = 0 на правой границе
-        A[indMatrix(indInner(i, j),indInner(i, j))] = 1;
-        A[indMatrix(indInner(i, j),indInner(i, j-1))] = -1;
-      }
-      else {
+        A[indMatrix(indInner(i, j), indInner(i, j))] = 1;
+        A[indMatrix(indInner(i, j), indInner(i, j-1))] = -1;
+      } else {
         if (j == 0) {
           // Условие u = 1 + y на левой границе
           y[indInner(i, j)] -= (1 + i * h) / h / h;
-        }
-        else {
-          A[indMatrix(indInner(i, j),indInner(i, j - 1))] = 1 / h / h;
+        } else {
+          A[indMatrix(indInner(i, j), indInner(i, j - 1))] = 1 / h / h;
         }
 
-        A[indMatrix(indInner(i, j),indInner(i, j + 1))] = 1 / h / h;
+        A[indMatrix(indInner(i, j), indInner(i, j + 1))] = 1 / h / h;
 
         if (i == 0) {
           // Условие u = 1 на нижней границе
           y[indInner(i, j)] -= 1 / h / h;
-        }
-        else {
-          A[indMatrix(indInner(i, j),indInner(i-1, j))] = 1 / h / h;
+        } else {
+          A[indMatrix(indInner(i, j), indInner(i-1, j))] = 1 / h / h;
         }
 
         if (i == M - 2) {
           // Условие u = 2 - x на верхней границе
           y[indInner(i, j)] -= (2 - j * h) / h / h;
-        }
-        else {
-          A[indMatrix(indInner(i, j),indInner(i + 1, j))] = 1 / h / h;
+        } else {
+          A[indMatrix(indInner(i, j), indInner(i + 1, j))] = 1 / h / h;
         }
 
-        A[indMatrix(indInner(i, j),indInner(i, j))] = (- 4 / h / h);
-        A[indMatrix(indInner(i, j),indInner(i, j))] -= (1 / this->tau);
+        A[indMatrix(indInner(i, j), indInner(i, j))] = (- 4 / h / h);
+        A[indMatrix(indInner(i, j), indInner(i, j))] -= (1 / this->tau);
         y[indInner(i, j)] -= u[ind(i + 1, j + 1)]/this->tau;
       }
     }
@@ -139,11 +137,11 @@ bool HeatConductionSolver<T>::MakeStep() {
       y[i] /= divisor;
 
       std::vector<std::thread> threads;
-      int rows_per_thread = M*(M-1) / num_threads;
+      int rows_per_thread = s / num_threads;
       for (int t = 0; t < num_threads; ++t) {
           int start = t * rows_per_thread;
-          int end = (t == num_threads - 1) ? M*(M-1) : (t + 1) * rows_per_thread;
-          threads.emplace_back(eliminate_rows, M*(M-1), M, i, start, end);
+          int end = (t == num_threads - 1) ? s : (t + 1) * rows_per_thread;
+          threads.emplace_back(eliminate_rows, s, M, i, start, end);
       }
 
       for (auto& th : threads) th.join();
