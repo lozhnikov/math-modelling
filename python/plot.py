@@ -1,4 +1,5 @@
 import sys
+from plotters import heat_conduction_plotter as hcp
 
 if __name__ == '__main__':
 
@@ -7,6 +8,8 @@ if __name__ == '__main__':
         raise SystemError
 
     plotters = {
+        "HeatConductionPlotter":
+            hcp.HeatConductionPlotter
     }
 
     if not (sys.argv[1] in plotters):

@@ -10,9 +10,10 @@
 
 #include <httplib.h>
 
-/* Сюда нужно добавить объявления тестовых функций. */
-
-
-/* Конец вставки. */
+/**
+ * @brief Набор тестов для класса mm::HeatConductionSolver.
+ * @param cli Указатель на HTTP клиент.
+ */
+void TestHeatConductionSolver(httplib::Client* cli);
 
 #endif  // TESTS_TEST_HPP_
