@@ -1,4 +1,5 @@
 import sys
+from plotters import heat_conduction_l_reverse_plotter as hcls
 
 if __name__ == '__main__':
 
@@ -7,6 +8,8 @@ if __name__ == '__main__':
         raise SystemError
 
     plotters = {
+        "HeatConductionLReversePlotter":
+            hcls.HeatConductionLReversePlotter
     }
 
     if not (sys.argv[1] in plotters):

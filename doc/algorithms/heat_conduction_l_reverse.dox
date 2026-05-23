@@ -1,0 +1,35 @@
+/*!
+
+@file heat_conduction_l_reverse.dox
+@author Zhuravlev George
+
+@page heat_conduction_l_reverse Расчет уравнения теплопроводности в
+L-образной области
+
+@section heat_conduction_l_reverse_algo Описание алгоритма
+
+
+Алгоритм реализован в классе mm::HeatConductionLReverseSolver.
+Один шаг алгоритма реализован в функции
+mm::HeatConductionLReverseSolver::MakeStep().
+
+Область представляет собой квадрат \f$[0, 2] \times [0, 2]\f$ с вырезанным
+левым нижним подквадратом \f$[0, 1] \times [0, 1]\f$. Расчёт распараллелен
+при помощи std::thread.
+
+*/
+
+
+/*!
+@fn mm::HeatConductionLReverseSolver::MakeStep()
+
+Функция реализует один шаг алгоритма решения уравнения теплопроводности,
+описанного в разделе
+@ref heat_conduction_l_reverse.
+
+Функция вычисляет решение уравнения теплопроводности
+\f[
+\frac{\partial u}{\partial t} = \Delta u
+\f]
+на следующем шаге по времени по явной разностной схеме.
+*/

@@ -12,6 +12,8 @@
 
 /* Сюда нужно добавить объявления тестовых функций. */
 
+void TestHeatConductionLReverseSolver(httplib::Client* cli);
+
 
 /* Конец вставки. */
 
