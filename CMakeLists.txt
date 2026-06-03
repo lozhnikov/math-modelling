@@ -116,6 +116,9 @@ add_executable(
   methods/methods.hpp
   methods/tasks_queue.hpp
   methods/tasks_queue.cpp
+  include/three_body_solver.hpp
+  include/three_body_solver_impl.hpp
+  methods/three_body_solver_method.cpp
 )
 
 ####################################################################
@@ -140,6 +143,7 @@ add_executable(
   tests/test.hpp
   tests/test_core.cpp
   tests/test_core.hpp
+  tests/three_body_solver_test.cpp
 )
 
 #####################################################################

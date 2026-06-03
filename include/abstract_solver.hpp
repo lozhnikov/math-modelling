@@ -107,5 +107,3 @@ class AbstractSolver {
 #include <abstract_solver_impl.hpp>
 
 #endif  // INCLUDE_ABSTRACT_SOLVER_HPP_
-
-

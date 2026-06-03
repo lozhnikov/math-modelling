@@ -37,6 +37,3 @@ bool AbstractSolver<T>::Solve(nlohmann::json* output) {
 }  // namespace mm
 
 #endif  // INCLUDE_ABSTRACT_SOLVER_IMPL_HPP_
-
-
-

@@ -2,7 +2,7 @@
  * @file methods/main.cpp
  * @author Mikhail Lozhnikov
  *
- * Файл с функией main() для серверной части программы.
+ * Файл с функцией main() для серверной части программы.
  */
 
 #include <httplib.h>
@@ -38,14 +38,8 @@ int main(int argc, char* argv[]) {
     svr.stop();
   });
 
-
   svr.Post("/CheckTaskStatus", [&](const httplib::Request& req,
                                         httplib::Response& res) {
-    /*
-    Поле body структуры httplib::Request содержит текст запроса.
-    Функция nlohmann::json::parse() используется для того,
-    чтобы преобразовать текст в объект типа nlohmann::json.
-    */
     nlohmann::json input = nlohmann::json::parse(req.body);
     nlohmann::json output;
 
@@ -54,68 +48,48 @@ int main(int argc, char* argv[]) {
     output["id"] = taskId;
 
     if (tasksQueue.IsTaskFinished(taskId)) {
-      // Задача завершена можно скачивать данные.
       output["status"] = "finished";
     } else {
-      /* Задача либо не была добавлена, либо она ещё не досчиталась,
-       * либо она уже посчитана, и данные уже скачаны и удалены с сервера. */
       output["status"] = "unknown";
     }
 
-    /*
-    Метод nlohmann::json::dump() используется для сериализации
-    объекта типа nlohmann::json в строку. Метод set_content()
-    позволяет задать содержимое ответа на запрос. Если передаются
-    JSON данные, то MIME тип следует выставить application/json.
-    */
     res.set_content(output.dump(), "application/json");
   });
-
 
   svr.Post("/DownloadTaskData", [&](const httplib::Request& req,
                                         httplib::Response& res) {
-    /*
-    Поле body структуры httplib::Request содержит текст запроса.
-    Функция nlohmann::json::parse() используется для того,
-    чтобы преобразовать текст в объект типа nlohmann::json.
-    */
     nlohmann::json input = nlohmann::json::parse(req.body);
     nlohmann::json output;
 
     int taskId = input["id"];
 
     if (tasksQueue.IsTaskFinished(taskId)) {
-      // Задача завершена можно скачивать данные.
       output = tasksQueue.GetFinishedTaskData(taskId);
     } else {
-      /* Задача либо не была добавлена, либо она ещё не досчиталась,
-       * либо она уже посчитана, и данные уже скачаны и удалены с сервера. */
       output["status"] = "unknown";
     }
 
     output["id"] = taskId;
 
-    /*
-    Метод nlohmann::json::dump() используется для сериализации
-    объекта типа nlohmann::json в строку. Метод set_content()
-    позволяет задать содержимое ответа на запрос. Если передаются
-    JSON данные, то MIME тип следует выставить application/json.
-    */
     res.set_content(output.dump(), "application/json");
   });
 
+ 
+  // Обработчик для задачи трёх тел
+  svr.Post("/ThreeBodySolver",
+      [&](const httplib::Request& req, httplib::Response& res) {
+    nlohmann::json input = nlohmann::json::parse(req.body);
+    nlohmann::json output;
 
+    if (mm::ThreeBodySolverMethod(input, &output, &tasksQueue) < 0)
+      res.status = 400;
 
-
-  /* Сюда нужно вставить обработчик post запроса для алгоритма. */
-
-
-
+    res.set_content(output.dump(), "application/json");
+  });
 
   /* Конец вставки. */
 
-  // Эта функция запускает сервер на указанном порту. Программа не завершится
-  // до тех пор, пока сервер не будет остановлен.
+  // Эта функция запускает сервер на указанном порту.
   svr.listen("0.0.0.0", port);
 
   return 0;

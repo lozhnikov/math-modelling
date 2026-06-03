@@ -12,6 +12,17 @@
 
 /* Сюда нужно добавить объявления тестовых функций. */
 
+/**
+ * @brief Набор тестов для класса mm::HeatConductionReferenceExampleSolver.
+ * @param cli Указатель на HTTP клиент.
+ */
+void TestHeatConductionReferenceExampleSolver(httplib::Client* cli);
+
+/**
+ * @brief Набор тестов для класса mm::ThreeBodySolver.
+ * @param cli Указатель на HTTP клиент.
+ */
+void TestThreeBodySolver(httplib::Client* cli);
 
 /* Конец вставки. */
 

@@ -1,8 +1,10 @@
 /**
  * @file tasks_queue.hpp
+ * @file methods/tasks_queue.hpp
  * @author Mikhail Lozhnikov
  *
  * Класс очереди задач.
+ * Очередь задач для серверной части.
  */
 
 #ifndef METHODS_TASKS_QUEUE_HPP_
@@ -11,11 +13,16 @@
 #include <queue>
 #include <utility>
 #include <thread>
+#include <atomic>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <thread>
 #include <condition_variable>
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 #include <abstract_solver_wrapper.hpp>
+#include "abstract_solver_wrapper.hpp"
 
 namespace mm {
 
@@ -72,17 +79,28 @@ class TasksQueue {
    */
   bool IsTaskFinished(int id);
 
-  /**
-   * @brief Получить данные расчетов завершенной задачи.
-   * @param id Идентификатор задачи.
-   * @return Данный расчетов задачи в формате JSON.
-   *
-   * Функция возвращает данные расчетов задачи с указанным идентификатором.
-   * Если данные задачи не найдены, то функция генерирует исключение типа
-   * std::runtime_error. После выполнения функции информация об указанной
-   * задаче, а также всё её данные удаляются. Задача также небудет числиться
-   * в списке завершенных задач.
-   */
+   /**
+    * @brief Добавить решалку в очередь задач.
+    * @param wrapper Решалка, добавляемая в очередь.
+    * @return Идентификатор добавленной задачи.
+    *
+    * Функция добавляет задачу в очередь задач и присваивает ей уникальный
+    * идентификатор. 
+    */
+  template<typename Wrapper>
+  int AddTask(Wrapper* wrapper) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    int id = nextId_++;
+
+    tasks_[id] = std::unique_ptr<AbstractSolverWrapper>(wrapper);
+    statuses_[id] = "running";
+
+    condition_.notify_one();
+
+    return id;
+  }
+
   nlohmann::json GetFinishedTaskData(int id);
 
  private:
@@ -90,9 +108,20 @@ class TasksQueue {
    * @brief Поток, в котором выполняется очередь задач.
    */
   void ThreadFunction();
+  void ProcessTasks();
+
+  int nextId_;
+  std::atomic<bool> stop_;
+  std::thread worker_;
+
+  std::mutex mutex_;
+  std::condition_variable condition_;
+
+  std::map<int, std::unique_ptr<AbstractSolverWrapper>> tasks_;
+  std::map<int, std::string> statuses_;
+  std::map<int, nlohmann::json> finishedData_;
 };
 
 }  // namespace mm
 
 #endif  // METHODS_TASKS_QUEUE_HPP_
-
