@@ -110,13 +110,36 @@ int main(int argc, char* argv[]) {
   /* Сюда нужно вставить обработчик post запроса для алгоритма. */
 
 
+  svr.Post("/ThreeBodyProblem", [&](const httplib::Request& req, httplib::Response& res) {
+    nlohmann::json input = nlohmann::json::parse(req.body);
 
+    class ThreeBodyMethodWrapper : public AbstractSolverWrapper {
+    private:
+      nlohmann::json input_;
+      nlohmann::json output_;
+    public:
+      explicit ThreeBodyMethodWrapper(const nlohmann::json& in) : input_(in) {}
+      bool Solve(nlohmann::json* out) override {
+        int ret = ThreeBodyProblemMethod(input_, &output_);
+        if (ret == 0) {
+          *out = output_;
+          return true;
+        }
+        return false;
+      }
+    };
 
+    int taskId = tasksQueue.AddTask(new ThreeBodyMethodWrapper(input));
+    nlohmann::json response;
+    response["id"] = taskId;
+    res.set_content(response.dump(), "application/json");
+  });
   /* Конец вставки. */
 
   // Эта функция запускает сервер на указанном порту. Программа не завершится
   // до тех пор, пока сервер не будет остановлен.
-  svr.listen("0.0.0.0", port);
+
+ svr.listen("0.0.0.0", port);
 
   return 0;
 }
