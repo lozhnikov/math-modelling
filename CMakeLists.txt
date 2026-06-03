@@ -101,11 +101,12 @@ endif ()
 
 include_directories(${MATH_MODELLING_INCLUDE_DIRS})
 
-####################################################################
-#    Исходные файлы серверной части. Сюда нужно добавить файлы
-#    - include/my_algorithm_name.hpp
-#    - methods/my_algorithm_name_method.cpp
-####################################################################
+include/matpoint.hpp
+  include/three_bodies_problem_solver.hpp
+  include/three_bodies_problem_solver_impl.hpp
+  include/vec3d.hpp
+  methods/three_bodies_problem_method.cpp
+  tests/three_body_problem_test.cpp
 
 add_executable(
   math_modelling_server
@@ -116,6 +117,7 @@ add_executable(
   methods/methods.hpp
   methods/tasks_queue.hpp
   methods/tasks_queue.cpp
+
 )
 
 ####################################################################
@@ -126,12 +128,12 @@ add_executable(
 
 target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
 
-####################################################################
-#    Исходные файлы клиентской части (набор тестов).
-#    Сюда нужно добавить файлы
-#    - include/my_algorithm_name.hpp
-#    - tests/my_algorithm_name_test.cpp
-####################################################################
+  include/matpoint.hpp
+  include/three_bodies_problem_solver.hpp
+  include/three_bodies_problem_solver_impl.hpp
+  include/vec3d.hpp
+  methods/three_bodies_problem_method.cpp
+  tests/three_body_problem_test.cpp
 
 add_executable(
   math_modelling_test
