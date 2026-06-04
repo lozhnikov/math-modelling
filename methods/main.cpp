@@ -1,8 +1,8 @@
 /**
  * @file methods/main.cpp
- * @author Mikhail Lozhnikov
+ * @author BorisKlimov
  *
- * Файл с функией main() для серверной части программы.
+ * Точка входа для веб-сервера математического моделирования.
  */
 
 #include <httplib.h>
@@ -105,12 +105,19 @@ int main(int argc, char* argv[]) {
   });
 
 
-
-
   /* Сюда нужно вставить обработчик post запроса для алгоритма. */
 
+  svr.Post("/ImplicitHeatConductionSolver",
+      [&](const httplib::Request& req, httplib::Response& res) {
+    nlohmann::json input = nlohmann::json::parse(req.body);
+    nlohmann::json output;
 
+    if (mm::ImplicitHeatConductionSolverMethod(input, &output,
+        &tasksQueue) < 0)
+      res.status = 400;
 
+    res.set_content(output.dump(), "application/json");
+  });
 
   /* Конец вставки. */
 

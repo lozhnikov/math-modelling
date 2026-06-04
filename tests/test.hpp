@@ -1,8 +1,7 @@
 /**
  * @file tests/test.hpp
- * @author Mikhail Lozhnikov
- *
- * Заголовочный файл для объявлений основных тестовых функций.
+ * @author BorisKlimov 
+ * @brief Header file with test prototypes.
  */
 
 #ifndef TESTS_TEST_HPP_
@@ -12,6 +11,10 @@
 
 /* Сюда нужно добавить объявления тестовых функций. */
 
+/**
+ * @brief Набор тестов для класса mm::ImplicitHeatConductionSolver.
+ */
+void TestImplicitHeatConductionSolver(httplib::Client* cli);
 
 /* Конец вставки. */
 

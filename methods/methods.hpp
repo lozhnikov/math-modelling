@@ -1,21 +1,22 @@
 /**
  * @file methods/methods.hpp
- * @author Mikhail Lozhnikov
+ * @author BorisKlimov
  *
- * Объявления функий для серверной части алгоритмов. Эти функции должны
- * считать JSON, который прислал клиент, выполнить алгоритм и отправить клиенту
- * JSON с результатом работы алгоритма.
+ * Объявления серверных методов (парсеров) для алгоритмов.
  */
 
 #ifndef METHODS_METHODS_HPP_
 #define METHODS_METHODS_HPP_
 
+#include <nlohmann/json.hpp>
+#include "tasks_queue.hpp"
+
 namespace mm {
 
-/* Сюда нужно вставить объявление серверной части алгоритма. */
-
-
-/* Конец вставки. */
+int ImplicitHeatConductionSolverMethod(
+  const nlohmann::json& input,
+  nlohmann::json* output,
+  TasksQueue* tasksQueue);
 
 }  // namespace mm
 

@@ -112,6 +112,8 @@ add_executable(
   include/abstract_solver.hpp
   include/abstract_solver_impl.hpp
   include/abstract_solver_wrapper.hpp
+  include/implicit_heat_conduction_solver.hpp
+  methods/implicit_heat_conduction_solver_method.cpp
   methods/main.cpp
   methods/methods.hpp
   methods/tasks_queue.hpp
@@ -135,6 +137,8 @@ target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
 
 add_executable(
   math_modelling_test
+  include/implicit_heat_conduction_solver.hpp
+  tests/implicit_heat_conduction_solver_test.cpp
   tests/io.hpp
   tests/main.cpp
   tests/test.hpp
@@ -149,4 +153,3 @@ add_executable(
 
 
 target_link_libraries(math_modelling_test ${MATH_MODELLING_LIBS})
-

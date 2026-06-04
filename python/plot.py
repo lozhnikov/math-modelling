@@ -1,19 +1,38 @@
+import os
 import sys
+import json
 
-if __name__ == '__main__':
+from plotters.implicit_heat_conduction_solver import (
+    ImplicitHeatConductionSolverPlotter,
+)
 
-    if len(sys.argv) < 4:
-        print('Usage: plot.py <plotter> <json_data_path> <output_path>')
-        raise SystemError
 
-    plotters = {
-    }
+def main():
+    if len(sys.argv) < 2:
+        print("Использование: python plot.py <путь_к_json_файлу_ответа>")
+        return
 
-    if not (sys.argv[1] in plotters):
-        raise SystemError
+    json_path = sys.argv[1]
+    if not os.path.exists(json_path):
+        print(f"Файл {json_path} не найден")
+        return
 
-    Plotter = plotters[sys.argv[1]]
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-    plotter = Plotter(sys.argv[2], sys.argv[3])
+    # Определяем тип алгоритма (извлекается из структуры данных или аргументов)
+    algorithm_type = data.get(
+        "algorithm_type", "ImplicitHeatConductionSolver")
+    output_directory = "output"
 
-    plotter.plot()
+    if algorithm_type == "ImplicitHeatConductionSolver":
+        # Вызов созданного нами плоттера
+        plotter = ImplicitHeatConductionSolverPlotter()
+        plotter.plot(data, output_directory)
+
+    else:
+        print(f"[WARNING] Неизвестный тип алгоритма: {algorithm_type}")
+
+
+if __name__ == "__main__":
+    main()
