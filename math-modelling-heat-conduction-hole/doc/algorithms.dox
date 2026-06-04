@@ -1,0 +1,12 @@
+/*!
+
+@file algorithms.dox
+@author Lev Tatarenko
+
+@page algorithms Алгоритмы
+
+Список реализованных алгоритмов:
+- \subpage heat_conduction_hole_solver
+
+
+*/
