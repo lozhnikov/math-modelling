@@ -1,4 +1,5 @@
 import sys
+from plotters.three_body_plotter import ThreeBodyPlotter
 
 if __name__ == '__main__':
 
@@ -7,6 +8,7 @@ if __name__ == '__main__':
         raise SystemError
 
     plotters = {
+      "ThreeBodyPlotter": ThreeBodyPlotter,
     }
 
     if not (sys.argv[1] in plotters):

@@ -116,6 +116,11 @@ add_executable(
   methods/methods.hpp
   methods/tasks_queue.hpp
   methods/tasks_queue.cpp
+  include/matpoint.hpp
+  include/three_bodies_problem_solver.hpp
+  include/three_bodies_problem_solver_impl.hpp
+  include/vec3d.hpp
+  methods/three_bodies_problem_method.cpp
 )
 
 ####################################################################
@@ -140,6 +145,7 @@ add_executable(
   tests/test.hpp
   tests/test_core.cpp
   tests/test_core.hpp
+  tests/three_bodies_problem_test.cpp
 )
 
 #####################################################################
