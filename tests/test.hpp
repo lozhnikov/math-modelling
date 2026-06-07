@@ -12,6 +12,7 @@
 
 /* Сюда нужно добавить объявления тестовых функций. */
 
+void TestThreeBodyProblem(httplib::Client* cli);
 
 /* Конец вставки. */
 

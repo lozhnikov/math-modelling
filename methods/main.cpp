@@ -2,7 +2,7 @@
  * @file methods/main.cpp
  * @author Mikhail Lozhnikov
  *
- * Файл с функией main() для серверной части программы.
+ * Файл с функцией main() для серверной части программы.
  */
 
 #include <httplib.h>
@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 #include "tasks_queue.hpp"
 #include "methods.hpp"
+#include "abstract_solver_wrapper.hpp"
 
 using json = nlohmann::json;
 
@@ -104,18 +105,38 @@ int main(int argc, char* argv[]) {
     res.set_content(output.dump(), "application/json");
   });
 
-
-
-
   /* Сюда нужно вставить обработчик post запроса для алгоритма. */
 
+  svr.Post("/ThreeBodyProblem", [&](const httplib::Request& req,
+    httplib::Response& res) {
+    nlohmann::json input = nlohmann::json::parse(req.body);
 
+    class ThreeBodyMethodWrapper : public mm::AbstractSolverWrapper {
+     private:
+      nlohmann::json input;
+      nlohmann::json output;
+     public:
+      explicit ThreeBodyMethodWrapper(const nlohmann::json& in) : input(in) {}
+      bool Solve(nlohmann::json* out) override {
+        int ret = mm::ThreeBodyProblemMethod(input, &output);
+        if (ret == 0) {
+          *out = output;
+          return true;
+        }
+        return false;
+      }
+    };
 
-
+    int taskId = tasksQueue.AddTask(new ThreeBodyMethodWrapper(input));
+    nlohmann::json response;
+    response["id"] = taskId;
+    res.set_content(response.dump(), "application/json");
+  });
   /* Конец вставки. */
 
   // Эта функция запускает сервер на указанном порту. Программа не завершится
   // до тех пор, пока сервер не будет остановлен.
+
   svr.listen("0.0.0.0", port);
 
   return 0;
