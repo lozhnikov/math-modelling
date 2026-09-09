@@ -1,11 +1,12 @@
 /*!
 
 @file algorithms.dox
-@author Mikhail Lozhnikov
+@author Darina Garaeva
 
 @page algorithms Алгоритмы
 
 Список реализованных алгоритмов:
+- \subpage heat_conduction
 
 
 */

@@ -1,6 +1,6 @@
 /**
  * @file tests/main.cpp
- * @author Mikhail Lozhnikov
+ * @author Darina Garaeva
  *
  * Файл с функией main() для клиентской части программы (набора тестов).
  */
@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
 
   /* Сюда нужно вставить вызов набора тестов для алгоритма. */
 
+  TestHeatConductionSolver(&cli);
 
   /* Конец вставки. */
 
