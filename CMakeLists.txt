@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(math-modelling CXX)
+project(math-modeling CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake")
 
-set(MATH_MODELLING_INCLUDE_DIRS "include")
+set(MATH_MODELING_INCLUDE_DIRS "include")
 
 find_package(Httplib)
 
@@ -37,7 +37,7 @@ if (NOT HTTPLIB_INCLUDE_DIR)
 
       set(HTTPLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/deps/${HTTPLIB_INCLUDE_DIR}")
 
-      set(MATH_MODELLING_INCLUDE_DIRS ${MATH_MODELLING_INCLUDE_DIRS} "${HTTPLIB_INCLUDE_DIR}")
+      set(MATH_MODELING_INCLUDE_DIRS ${MATH_MODELING_INCLUDE_DIRS} "${HTTPLIB_INCLUDE_DIR}")
 
       message(STATUS
           "Successfully downloaded httplib into ${CMAKE_BINARY_DIR}/deps/${HTTPLIB_INCLUDE_DIR}/")
@@ -53,7 +53,7 @@ if (NOT HTTPLIB_INCLUDE_DIR)
         "  Error log: ${HTTPLIB_DOWNLOAD_LOG}")
   endif ()
 else ()
-  set(MATH_MODELLING_INCLUDE_DIRS ${MATH_MODELLING_INCLUDE_DIRS} "${HTTPLIB_INCLUDE_DIR}")
+  set(MATH_MODELING_INCLUDE_DIRS ${MATH_MODELING_INCLUDE_DIRS} "${HTTPLIB_INCLUDE_DIR}")
 endif ()
 
 find_package(NlohmannJson)
@@ -77,7 +77,7 @@ if (NOT NLOHMANN_JSON_INCLUDE_DIR)
     if (NLOHMANN_JSON_LOCAL_HASH STREQUAL NLOHMANN_JSON_EXPECTED_HASH)
       set(NLOHMANN_JSON_INCLUDE_DIR "${CMAKE_BINARY_DIR}/deps/${NLOHMANN_JSON_DIR}")
 
-      set(MATH_MODELLING_INCLUDE_DIRS ${MATH_MODELLING_INCLUDE_DIRS} "${NLOHMANN_JSON_INCLUDE_DIR}")
+      set(MATH_MODELING_INCLUDE_DIRS ${MATH_MODELING_INCLUDE_DIRS} "${NLOHMANN_JSON_INCLUDE_DIR}")
 
       message(STATUS
           "Successfully downloaded nlohmann json into ${CMAKE_BINARY_DIR}/deps/${NLOHMANN_JSON_DIR}/")
@@ -92,14 +92,16 @@ if (NOT NLOHMANN_JSON_INCLUDE_DIR)
         "  Error log: ${NLOHMANN_JSON_DOWNLOAD_LOG}")
   endif ()
 else ()
-  set(MATH_MODELLING_INCLUDE_DIRS ${MATH_MODELLING_INCLUDE_DIRS} "${NLOHMANN_JSON_INCLUDE_DIR}")
+  set(MATH_MODELING_INCLUDE_DIRS ${MATH_MODELING_INCLUDE_DIRS} "${NLOHMANN_JSON_INCLUDE_DIR}")
 endif ()
 
-if (NOT MSVC)
-  set(MATH_MODELLING_LIBS "pthread")
+if (MSVC)
+  set(MATH_MODELING_LIBS "ws2_32")
+else ()
+  set(MATH_MODELING_LIBS pthread ws2_32)
 endif ()
 
-include_directories(${MATH_MODELLING_INCLUDE_DIRS})
+include_directories(${MATH_MODELING_INCLUDE_DIRS})
 
 ####################################################################
 #    Исходные файлы серверной части. Сюда нужно добавить файлы
@@ -108,10 +110,12 @@ include_directories(${MATH_MODELLING_INCLUDE_DIRS})
 ####################################################################
 
 add_executable(
-  math_modelling_server
+  math_modeling_server
   include/abstract_solver.hpp
   include/abstract_solver_impl.hpp
   include/abstract_solver_wrapper.hpp
+  include/heat_conduction_solver.hpp
+  methods/heat_conduction_solver_method.cpp
   methods/main.cpp
   methods/methods.hpp
   methods/tasks_queue.hpp
@@ -124,7 +128,7 @@ add_executable(
 
 
 
-target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
+target_link_libraries(math_modeling_server ${MATH_MODELING_LIBS})
 
 ####################################################################
 #    Исходные файлы клиентской части (набор тестов).
@@ -134,7 +138,9 @@ target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
 ####################################################################
 
 add_executable(
-  math_modelling_test
+  math_modeling_test
+  include/heat_conduction_solver.hpp
+  tests/heat_conduction_solver_test.cpp
   tests/io.hpp
   tests/main.cpp
   tests/test.hpp
@@ -148,5 +154,5 @@ add_executable(
 
 
 
-target_link_libraries(math_modelling_test ${MATH_MODELLING_LIBS})
+target_link_libraries(math_modeling_test ${MATH_MODELING_LIBS})
 
