@@ -34,7 +34,7 @@ class AbstractSolver {
   using ValueType = T;
 
   /**
-   * @brief Конструктор калсса.
+   * @brief Конструктор класса.
    * @param tau Величина шага по времени.
    * @param finishTime Конечное время.
    * @param exportPeriod Временной интервал для сохранения данных.

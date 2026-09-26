@@ -14,6 +14,10 @@ namespace mm {
 
 /* Сюда нужно вставить объявление серверной части алгоритма. */
 
+int HeatConductionSolverMethod(
+                               const nlohmann::json& input,
+                               nlohmann::json* output,
+                               TasksQueue* taskqueue);
 
 /* Конец вставки. */
 
