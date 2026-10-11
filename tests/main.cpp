@@ -50,14 +50,14 @@ int main(int argc, char* argv[]) {
 
 
   /* Сюда нужно вставить вызов набора тестов для алгоритма. */
-
+  TestEquation(&cli);
 
   /* Конец вставки. */
 
   // Отправляем GET запрос для остановки сервера.
   httplib::Result res = cli.Get("/stop");
 
-  if (res->status != 200)
+  if (!res || res->status != 200)
     return -1;
 
   return TestSuite::Status();

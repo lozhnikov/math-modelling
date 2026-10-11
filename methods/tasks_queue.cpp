@@ -71,7 +71,7 @@ void TasksQueue::ThreadFunction() {
         continue;
       }
 
-      ticket = tasks.back();
+      ticket = tasks.front();
 
       tasks.pop();
     }

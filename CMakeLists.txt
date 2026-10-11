@@ -99,6 +99,12 @@ if (NOT MSVC)
   set(MATH_MODELLING_LIBS "pthread")
 endif ()
 
+if (WIN32 AND NOT MSVC)
+  # MinGW: httplib требует WinSock (под MSVC подключается через #pragma).
+  list(APPEND MATH_MODELLING_LIBS ws2_32)
+  add_compile_definitions(_WIN32_WINNT=0x0A00)
+endif ()
+
 include_directories(${MATH_MODELLING_INCLUDE_DIRS})
 
 ####################################################################
@@ -112,6 +118,8 @@ add_executable(
   include/abstract_solver.hpp
   include/abstract_solver_impl.hpp
   include/abstract_solver_wrapper.hpp
+  include/equation_solver.hpp
+  methods/equation_method.cpp
   methods/main.cpp
   methods/methods.hpp
   methods/tasks_queue.hpp
@@ -135,6 +143,8 @@ target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
 
 add_executable(
   math_modelling_test
+  include/equation_solver.hpp
+  tests/equation_test.cpp
   tests/io.hpp
   tests/main.cpp
   tests/test.hpp
