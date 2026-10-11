@@ -99,6 +99,12 @@ if (NOT MSVC)
   set(MATH_MODELLING_LIBS "pthread")
 endif ()
 
+if (WIN32 AND NOT MSVC)
+  # MinGW: httplib требует WinSock (под MSVC подключается через #pragma).
+  list(APPEND MATH_MODELLING_LIBS ws2_32)
+  add_compile_definitions(_WIN32_WINNT=0x0A00)
+endif ()
+
 include_directories(${MATH_MODELLING_INCLUDE_DIRS})
 
 ####################################################################

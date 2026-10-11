@@ -3,16 +3,24 @@
  * @author Энгельгардт М
  *
  * @brief Явная разностная схема для двумерного уравнения теплопроводности
- * в L‑образной области с параллелизацией через std::async.
+ * в L‑образной области с параллелизацией через std::thread.
  *
  * Подробности:
- * - Сетка равномерная по x и y: шаг h = 1 / M, индексы i (ось y), j (ось x).
- * - Область: [0,2]x[0,2] без правого верхнего квадрата (x > 1, y > 1).
- * - Граничные условия смешанные (Дирихле и Нейман), заданы согласно варианту.
+ * - Сетка равномерная по x и y: шаг h = 1 / M, индексы i (ось y), j (ось x),
+ *   i, j = 0 .. 3M.
+ * - Область: [0,3]x[0,3] без правого верхнего квадрата (x > 1, y > 1).
+ * - Граничные условия:
+ *     y = 0:              u = 2
+ *     x = 3, 0 <= y <= 1: u = 2 + y
+ *     y = 1, 1 <= x <= 3: u = 6 - x
+ *     y = 3, 0 <= x <= 1: u = 0
+ *     x = 0:              du/dx = 0
+ *     x = 1, 1 <= y <= 3: du/dn = 0
  * - Уравнение: du/dt = Δu, аппроксимируется явной схемой первого порядка
- *   по времени и второго порядка по пространству.
+ *   по времени и второго порядка по пространству. Схема устойчива при
+ *   tau <= h^2 / 4.
  * - Параллелизм: на каждом шаге внутренние узлы обрабатываются несколькими
- *   потоками через std::async; граничные условия применяются последовательно
+ *   потоками std::thread; граничные условия применяются последовательно
  *   после завершения всех потоков.
  */
 
@@ -21,8 +29,7 @@
 
 // Стандартные библиотеки
 #include <vector>    // для хранения значений на сетке
-#include <future>    // std::async, std::future -- запуск асинхронных задач
-#include <thread>    // std::thread::hardware_concurrency -- число ядер
+#include <thread>    // std::thread -- потоки
 
 // Сторонние зависимости (уже загружаются через CMake)
 #include <nlohmann/json.hpp>    // работа с JSON-объектами (nlohmann::json)
@@ -40,14 +47,7 @@ namespace mm {
  * реализован в базовом классе (метод Solve).
  */
 template<typename T>
-class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
-  M_(M),
-  h_(static_cast<T>(1.0) / static_cast<T>(M)),
-  u_((3 * M_ + 1) * (3 * M_ + 1)),  // 3M+1 узлов по каждой оси
-  u_next_((3 * M_ + 1) * (3 * M_ + 1))
-{
-  InitializeArrays();
-}
+class EquationSolver : public AbstractSolver<T> {
  public:
   /**
    * @brief Конструктор.
@@ -59,11 +59,11 @@ class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
    */
   EquationSolver(size_t M, T tau, T finishTime, T exportPeriod);
 
-
   /**
    * @brief Один шаг явной разностной схемы.
    *
-   * @return true, если шаг выполнен успешно.
+   * @return true, если шаг выполнен успешно; false, если параметры
+   * не удовлетворяют условию устойчивости (tau > h^2/4) или M == 0.
    */
   bool MakeStep() override;
 
@@ -71,8 +71,7 @@ class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
    * @brief Сохраняет текущее температурное поле в JSON.
    *
    * @param output -- указатель на JSON-объект, куда будет записана сетка.
-   *
-   * Важно: с _ на конце обозначаю приватные переменные (вроде так надо по правилам оформления)
+   * Узлы вне области записываются как null.
    */
   void ExportData(nlohmann::json* output) override;
 
@@ -82,17 +81,15 @@ class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
   T h_;        // шаг сетки = 1.0 / M_
 
   // Два слоя значений (текущий и следующий) для обновления по явной схеме.
-  // Хранятся как одномерные массивы размера (2M+1)*(2M+1).
+  // Хранятся как одномерные массивы размера (3M+1)*(3M+1).
   // Индексация: строка i (координата y), столбец j (координата x).
   std::vector<T> u_;       // u^n -- текущий временной слой
   std::vector<T> u_next_;  // u^{n+1} -- следующий слой
 
-  //Вспомогательные методы
-
   /**
    * @brief Преобразует двумерные индексы в индекс плоского массива.
-   * @param i -- номер строки (ось y: 0 .. 2M)
-   * @param j -- номер столбца (ось x: 0 .. 2M)
+   * @param i -- номер строки (ось y: 0 .. 3M)
+   * @param j -- номер столбца (ось x: 0 .. 3M)
    * @return индекс в массиве u_, оно же u_next_.
    */
   size_t Index(size_t i, size_t j) const {
@@ -102,22 +99,15 @@ class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
   /**
    * @brief Проверяет, принадлежит ли узел (i,j) L‑образной области.
    *
-   * Область: весь квадрат [0,2]x[0,2], за исключением точек,
+   * Область: весь квадрат [0,3]x[0,3], за исключением точек,
    * у которых x > 1 (j > M_) и y > 1 (i > M_).
    */
   bool IsInside(size_t i, size_t j) const {
     return !(j > M_ && i > M_);
   }
 
-  //Методы для работы с граничными условиями
-
   /**
    * @brief Определяет, находится ли узел (i,j) на границе Дирихле.
-   *
-   * Используются целочисленные индексы, поэтому сравнение точное.
-   *
-   *Прим для себя: тут size_t это беззнаковый целый,
-   *и сравнения вида == корректны.
    */
   bool IsDirichlet(size_t i, size_t j) const;
 
@@ -128,17 +118,13 @@ class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
 
   /**
    * @brief Вычисляет заданную температуру для узла Дирихле.
-   *
-   * Формулы берутся из условия задачи.
    */
   T DirichletValue(size_t i, size_t j) const;
 
   /**
    * @brief Заполняет массивы начальными значениями.
    *
-   * Внутри области -- ноль, на границах Дирихле -- аналитическое значение.
-   *
-   *Прим: ну по крайней мере я так понял. Или как оно надо?
+   * Внутри области -- ноль, на границах Дирихле -- заданное значение.
    */
   void InitializeArrays();
 };
@@ -146,98 +132,94 @@ class EquationSolver : AbstractSolver<T>(tau, finishTime, exportPeriod),
 
 // Реализация
 
-// Конструктор
 template<typename T>
-HeatEquationSolver<T>::HeatEquationSolver(
+EquationSolver<T>::EquationSolver(
     size_t M, T tau, T finishTime, T exportPeriod)
-    // Вызов конструктора базового класса AbstractSolver<T>
     : AbstractSolver<T>(tau, finishTime, exportPeriod),
       M_(M),
-      h_(static_cast<T>(1.0) / static_cast<T>(M)),
-      // Выделяем память под оба слоя (квадратную сетку)
-      u_((2 * M + 1) * (2 * M + 1)),
-      u_next_((2 * M + 1) * (2 * M + 1)) {
-  // Заполняем начальные условия
+      h_(M == 0 ? T(0) : static_cast<T>(1.0) / static_cast<T>(M)),
+      // Выделяем память под оба слоя: (3M+1) узлов по каждой оси
+      u_((3 * M + 1) * (3 * M + 1)),
+      u_next_((3 * M + 1) * (3 * M + 1)) {
   InitializeArrays();
 }
 
-// Инициализация начального поля
 template<typename T>
-void HeatEquationSolver<T>::InitializeArrays() {
-  const size_t N = 3 * M_ + 1;  // полный размер сетки по каждому направлению
-  // Обходим все узлы квадрата
+void EquationSolver<T>::InitializeArrays() {
+  const size_t N = 3 * M_ + 1;
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
-      // Пропускаем точки вне L‑области
       if (!IsInside(i, j))
         continue;
 
-      T value = 0;  // внутри области начальная температура = 0. (да?)
-      // Если узел лежит на границе Дирихле, используем заданное значение.
+      T value = 0;  // начальная температура внутри области
       if (IsDirichlet(i, j))
         value = DirichletValue(i, j);
 
-      // Записываем начальное значение в текущий слой
       u_[Index(i, j)] = value;
     }
   }
+  // Начальный слой Неймана: u(0) = u(1) = 0 и так выполнено.
+  u_next_ = u_;
 }
 
-// Проверка принадлежности границе Дирихле (писано по картинке, вроде оно)
 template<typename T>
-bool HeatEquationSolver<T>::IsDirichlet(size_t i, size_t j) const {
+bool EquationSolver<T>::IsDirichlet(size_t i, size_t j) const {
   const size_t N = 3 * M_;  // индекс 3M соответствует координате 3
 
-  // Верхняя граница: y = 3 (i = 3M), все x
-  if (i == N) return true;
-  // Нижняя граница: y = 0 (i = 0), все x
+  // Нижняя граница: y = 0, 0 <= x <= 3
   if (i == 0) return true;
-  // Средняя горизонтальная: y = 1 (i = M), все x
-  if (i == M_) return true;
-  // Правая вертикальная: x = 3 (j = 3M), все y
-  if (j == N) return true;
+  // Правая граница: x = 3, 0 <= y <= 1
+  if (j == N && i <= M_) return true;
+  // Ступенька: y = 1, 1 <= x <= 3
+  if (i == M_ && j >= M_) return true;
+  // Верхняя граница: y = 3, 0 <= x <= 1
+  if (i == N && j <= M_) return true;
 
   return false;
 }
 
-// Проверка принадлежности границе Неймана (-||-)
 template<typename T>
-bool HeatEquationSolver<T>::IsNeumann(size_t i, size_t j) const {
-  // Левая граница: x = 0 (j = 0)
-  return (j == 0 && i > 0 && i < 3 * M_);
-  // Левая граница: x = 1 (j = 1)
-  return (j == 1 && i > M_ && i < 3 * M_);
+bool EquationSolver<T>::IsNeumann(size_t i, size_t j) const {
+  // Левая граница: x = 0, 0 < y < 3
+  if (j == 0 && i > 0 && i < 3 * M_) return true;
+  // Внутренняя вертикальная граница: x = 1, 1 < y < 3
+  if (j == M_ && i > M_ && i < 3 * M_) return true;
+  return false;
 }
 
-// Вычисление значения на границе Дирихле
 template<typename T>
-T HeatEquationSolver<T>::DirichletValue(size_t i, size_t j) const {
+T EquationSolver<T>::DirichletValue(size_t i, size_t j) const {
   T x = static_cast<T>(j) * h_;
   T y = static_cast<T>(i) * h_;
 
-  if (i == 3 * M_) return 0;           // y=3: u=0
-  if (i == 0) return 1;                // y=0: u=1
-  if (i == M_) return 6 - x;           // y=1: u=6-x
-  if (j == 3 * M_) return 2 + y;       // x=3: u=2+y
+  if (i == 0) return 2;                // y = 0: u = 2
+  if (i == M_ && j >= M_) return 6 - x;  // y = 1: u = 6 - x
+  if (j == 3 * M_) return 2 + y;       // x = 3: u = 2 + y
+  if (i == 3 * M_) return 0;           // y = 3: u = 0
 
   return 0;
 }
 
-// Один шаг по времени (явная схема + параллелизм)
 template<typename T>
-bool HeatEquationSolver<T>::MakeStep() {
-  const T h2 = h_ * h_;              // квадрат шага сетки
-  const T tau = this->tau;           // шаг по времени (из базового класса)
-  const T coeff = tau / h2;          // безразмерный коэффициент (τ/h²)
+bool EquationSolver<T>::MakeStep() {
+  if (M_ == 0)
+    return false;
+
+  const T h2 = h_ * h_;
+  const T coeff = this->tau / h2;    // tau / h^2
+  // Условие устойчивости явной схемы: tau / h^2 <= 1/4.
+  if (coeff > static_cast<T>(0.25) * (1 + static_cast<T>(1e-6)))
+    return false;
+
   const size_t N = 3 * M_ + 1;       // количество узлов по одному направлению
 
-  // Определяем количество потоков
   unsigned int nthreads = std::thread::hardware_concurrency();
-  if (nthreads < 1) nthreads = 4;    // fallback
+  if (nthreads < 1) nthreads = 4;
   if (nthreads > N) nthreads = static_cast<unsigned int>(N);
 
-  // Вектор для хранения потоков
   std::vector<std::thread> threads;
+  threads.reserve(nthreads);
 
   // Разбиваем строки (индексы i) на блоки равного размера
   size_t rows_per_thread = (N + nthreads - 1) / nthreads;
@@ -248,86 +230,69 @@ bool HeatEquationSolver<T>::MakeStep() {
     size_t end = start + rows_per_thread;
     if (end > N) end = N;
 
-    // Создаём поток, передавая лямбду
     threads.emplace_back([this, start, end, coeff, N]() {
-      // Обрабатываем строки с start до end (не включая end)
       for (size_t i = start; i < end; ++i) {
         for (size_t j = 0; j < N; ++j) {
           // Точки вне области и граничные пропускаем
           if (!IsInside(i, j)) continue;
           if (IsDirichlet(i, j) || IsNeumann(i, j)) continue;
 
-          // Индекс центрального узла
           size_t idx = Index(i, j);
-
-          // Значения в четырёх соседних узлах (старый слой u_)
-          T u_im1 = u_[Index(i - 1, j)];
-          T u_ip1 = u_[Index(i + 1, j)];
-          T u_jm1 = u_[Index(i, j - 1)];
-          T u_jp1 = u_[Index(i, j + 1)];
-          // Значение в текущей точке (старый слой)
           T u_ij = u_[idx];
+          T lap = u_[Index(i - 1, j)] + u_[Index(i + 1, j)] +
+                  u_[Index(i, j - 1)] + u_[Index(i, j + 1)] - 4 * u_ij;
 
-          // Явная схема: u^{n+1} = u^n + (τ/h²)*(u_{i-1} + u_{i+1} + u_{j-1} + u_{j+1} - 4*u_{ij})
-          u_next_[idx] = u_ij + coeff * (u_im1 + u_ip1 + u_jm1 + u_jp1 - 4 * u_ij);
+          u_next_[idx] = u_ij + coeff * lap;
         }
       }
     });
   }
 
-  // Ожидаем завершения всех потоков
-  for (auto& thread : threads) {
+  for (auto& thread : threads)
     thread.join();
-  }
 
-  // Применяем граничные условия (последовательно)
   // 1) Условия Дирихле
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
-      if (!IsInside(i, j)) continue;
-      if (IsDirichlet(i, j)) {
+      if (IsInside(i, j) && IsDirichlet(i, j))
         u_next_[Index(i, j)] = DirichletValue(i, j);
-      }
     }
   }
 
-  // 2) Условия Неймана (du/dn = 0)
-  // Левая граница (x=0): du/dx=0 => u(0,y) = u(h,y)
-  for (size_t i = 1; i < 3 * M_; ++i) {
+  // 2) Условия Неймана (du/dn = 0), аппроксимация первого порядка.
+  // Левая граница (x = 0): u(0, y) = u(h, y)
+  for (size_t i = 1; i < 3 * M_; ++i)
     u_next_[Index(i, 0)] = u_next_[Index(i, 1)];
-  }
 
-  // Внутренняя вертикальная граница (x = 1, y от 1 до 3)
-  for (size_t i = M_ + 1; i < N - 1; ++i) {
-    if (IsInside(M_, i) && IsNeumann(M_, i)) {
-      u_next_[Index(M_, i)] = u_next_[Index(M_ + 1, i)];
-    }
-  }
+  // Внутренняя вертикальная граница (x = 1, 1 < y < 3): u(1, y) = u(1-h, y)
+  for (size_t i = M_ + 1; i < 3 * M_; ++i)
+    u_next_[Index(i, M_)] = u_next_[Index(i, M_ - 1)];
 
-  // Переключаем слои
   u_.swap(u_next_);
 
   return true;
 }
- 
 
-// Экспорт текущего температурного поля в JSON
 template<typename T>
-void HeatEquationSolver<T>::ExportData(nlohmann::json* output) {
+void EquationSolver<T>::ExportData(nlohmann::json* output) {
   const size_t N = 3 * M_ + 1;
-nlohmann::json grid = nlohmann::json::array();
+  nlohmann::json grid = nlohmann::json::array();
 
-for (size_t i = 0; i < N; ++i) {
-  nlohmann::json row = nlohmann::json::array();
-  for (size_t j = 0; j < N; ++j) {
-    row.push_back(u_[Index(i, j)]);  // В этой задаче нет «дыр» в сетке
+  for (size_t i = 0; i < N; ++i) {
+    nlohmann::json row = nlohmann::json::array();
+    for (size_t j = 0; j < N; ++j) {
+      if (IsInside(i, j))
+        row.push_back(u_[Index(i, j)]);
+      else
+        row.push_back(nullptr);  // вырезанный квадрат
+    }
+    grid.push_back(row);
   }
-  grid.push_back(row);
+
+  (*output)["grid"] = grid;
+  (*output)["M"] = M_;
 }
-(*output)["grid"] = grid;
 
-}
+}  // namespace mm
 
-}  // namespace mm -- это вот к этому
-
-#endif  // INCLUDE_HEAT_EQUATION_SOLVER_HPP_
+#endif  // INCLUDE_EQUATION_SOLVER_HPP_

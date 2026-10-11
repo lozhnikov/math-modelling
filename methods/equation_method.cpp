@@ -10,7 +10,7 @@
 
 #include <nlohmann/json.hpp>            // работа с JSON
 #include "abstract_solver_wrapper.hpp"  // обёртки Float/DoubleAbstractSolverWrapper
-#include "quation_solver.hpp"     // наш класс EquationSolver
+#include "equation_solver.hpp"    // наш класс EquationSolver
 #include "tasks_queue.hpp"              // класс очереди задач
 #include "methods.hpp"
 
@@ -25,6 +25,14 @@ int mm::EquationMethod(const nlohmann::json& input,
   double tau = input.at("tau").get<double>();
   double finishTime = input.at("finishTime").get<double>();
   double exportPeriod = input.at("exportPeriod").get<double>();
+
+  // Проверяем параметры: M > 0 и условие устойчивости tau <= h^2/4.
+  if (M == 0 || tau <= 0 || exportPeriod <= 0 ||
+      tau * static_cast<double>(M * M) > 0.25 * (1 + 1e-6)) {
+    (*output)["status"] = "invalid parameters (need M > 0, "
+                          "0 < tau <= h^2/4, exportPeriod > 0)";
+    return -1;
+  }
 
   // 2) Создаём решалку
   auto* solver = new mm::EquationSolver<double>(M, tau,

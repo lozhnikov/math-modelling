@@ -11,7 +11,7 @@
 #include <httplib.h>
 
 /* Сюда нужно добавить объявления тестовых функций. */
-void TestEquation();
+void TestEquation(httplib::Client* cli);
 
 /* Конец вставки. */
 

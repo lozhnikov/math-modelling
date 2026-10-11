@@ -112,10 +112,15 @@ int main(int argc, char* argv[]) {
 
 svr.Post("/HeatEquation", [&](const httplib::Request& req,
                             httplib::Response& res) {
-  nlohmann::json input = nlohmann::json::parse(req.body);
   nlohmann::json output;
-  int taskId = mm::HeatEquationMethod(input, &output);
-  output["id"] = taskId;
+  try {
+    nlohmann::json input = nlohmann::json::parse(req.body);
+    output["id"] = mm::EquationMethod(input, &output);
+  } catch (const std::exception& e) {
+    output["id"] = -1;
+    output["status"] = std::string("bad request: ") + e.what();
+    res.status = 400;
+  }
   res.set_content(output.dump(), "application/json");
 });
 
