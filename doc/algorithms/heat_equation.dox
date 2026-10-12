@@ -1,0 +1,31 @@
+/*! @page heat_equation Heat equation in a notched square
+
+@brief Explicit parallel finite-difference solver for u_t = u_xx + u_yy.
+
+The computational domain is [0,3]^2 minus [1,2] x [0,1].
+The grid spacing is h=1/m, and the explicit time step must satisfy
+0 < tau <= h*h/4. Two groups of rows are updated concurrently using
+std::async and std::future; a buffer swap follows both futures' get().
+
+Dirichlet boundaries: top u=x+3, left u=y, right u=9-y,
+notch top u=-1, notch left u=-y, bottom right u=3*x.
+Zero normal derivatives: bottom left and notch right.
+Ghost values are reflected for these Neumann conditions.
+
+At junctions, Dirichlet conditions take priority. Initial interior
+values are constant (default 0), since the assignment does not specify
+an initial condition. The simulation may overshoot finish_time by less
+than one tau because the final step uses a constant tau.
+
+JSON example:
+@code{.json}
+{"m": 10, "finish_time": 0.2, "export_every": 10,
+ "initial_temperature": 0.0}
+@endcode
+
+POST to /HeatEquation; response includes status, m, h, tau and data.
+Each data entry contains time and a two-dimensional temperature array.
+The removed region is zero-filled in JSON and masked by the plotter.
+
+Plotting: python python/plot.py heat_equation data/heat.json data/heat.gif
+*/

@@ -6,7 +6,7 @@ class AbstractPlotter(ABC):
     def __init__(self, json_data_path, output_path):
         self.output_path = output_path
 
-        with open(json_data_path) as json_file:
+        with open(json_data_path, encoding='utf-8-sig') as json_file:
             self.data = json.load(json_file)
 
     @abstractmethod

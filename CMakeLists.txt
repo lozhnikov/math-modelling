@@ -112,6 +112,8 @@ add_executable(
   include/abstract_solver.hpp
   include/abstract_solver_impl.hpp
   include/abstract_solver_wrapper.hpp
+  include/heat_equation.hpp
+  methods/heat_equation_method.cpp
   methods/main.cpp
   methods/methods.hpp
   methods/tasks_queue.hpp
@@ -126,6 +128,10 @@ add_executable(
 
 target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
 
+if (WIN32)
+  target_link_libraries(math_modelling_server ws2_32)
+endif ()
+
 ####################################################################
 #    Исходные файлы клиентской части (набор тестов).
 #    Сюда нужно добавить файлы
@@ -135,6 +141,8 @@ target_link_libraries(math_modelling_server ${MATH_MODELLING_LIBS})
 
 add_executable(
   math_modelling_test
+  include/heat_equation.hpp
+  tests/heat_equation_test.cpp
   tests/io.hpp
   tests/main.cpp
   tests/test.hpp
@@ -150,3 +158,6 @@ add_executable(
 
 target_link_libraries(math_modelling_test ${MATH_MODELLING_LIBS})
 
+if (WIN32)
+  target_link_libraries(math_modelling_test ws2_32)
+endif ()

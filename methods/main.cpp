@@ -109,8 +109,19 @@ int main(int argc, char* argv[]) {
 
   /* Сюда нужно вставить обработчик post запроса для алгоритма. */
 
+  svr.Post("/HeatEquation", [&](const httplib::Request& req,
+                                httplib::Response& res) {
+    nlohmann::json output;
 
+    try {
+      nlohmann::json input = nlohmann::json::parse(req.body);
+      mm::HeatEquationMethod(input, &output);
+    } catch (const std::exception& error) {
+      output = {{"status", "failed"}, {"error", error.what()}};
+    }
 
+    res.set_content(output.dump(), "application/json");
+  });
 
   /* Конец вставки. */
 
